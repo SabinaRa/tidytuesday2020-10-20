@@ -1,0 +1,238 @@
+---
+title: "TidyTuesday Great American Bear Festival"
+output: html_document
+---
+TidyTuesday Great American Bear Festival 2020-10-20 |
+[Description](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-10-20/readme.md) |
+Data source: 2019 GABF Medal Winner Analysis |
+Contributor: Sabina Rako, Twitter: @ra_sabina]
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+library(tidytuesdayR)
+library(tidyverse)
+library(skimr)
+library(tidytext)
+library(ggtext)
+library(ggstance)
+library(extrafont)
+
+loadfonts()
+```
+
+## Loading data
+
+```{r message=FALSE, warning=FALSE}
+
+beer_awards <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-10-20/beer_awards.csv')
+
+
+
+```
+
+## Exploring data
+
+```{r message=FALSE, warning=FALSE}
+
+skim(beer_awards)
+head(beer_awards)
+```
+
+## Preparing data 
+
+```{r}
+#Top three brewery
+ 
+top3brewery <- beer_awards %>% 
+  group_by(brewery) %>% 
+  count()  %>% 
+  arrange(desc(n)) %>% 
+  ungroup() %>% 
+  top_n(3,n)
+
+top3medals <- beer_awards %>% 
+  filter(brewery == "Pabst Brewing Co." | brewery == "Miller Brewing Co." | brewery == "Anheuser-Busch, Inc") %>% 
+  select(medal, brewery, year) 
+
+top3medals$medal <- as.factor(top3medals$medal)
+```
+
+## Visualisation
+
+```{r}
+p1 <- ggplot(top3medals, aes(year,brewery, color= factor(medal, levels = rev(c("Gold", "Silver", "Bronze")), order = TRUE)), size = n) + 
+    geom_point(position = ggstance::position_dodgev(height = 0.6), 
+               size = 14) +
+    scale_colour_manual(values = c("#A77044", "#A7A7AD", "#D6AF36")) +  
+    scale_x_continuous(breaks = seq(1988, 2017, 1), limits = c(1988,2017)) +
+    theme_minimal() + 
+    labs(title = "Great American Bear Festival", 
+         subtitle= "Medals awarded to top three breweries",
+         caption = "Data source: 2019 GABF Medal Winner Analysis | Vis: @ra_sabina",
+         color= "Medals") + 
+    theme(axis.title.y = element_blank(), 
+          axis.text.y = element_blank(), 
+          axis.text.x = element_text(size = 14), 
+          panel.grid.major.y = element_blank(), 
+          axis.title.x =element_blank(), 
+          panel.grid.minor.x = element_blank(), 
+          legend.position="bottom", 
+          text = element_text(family="Courier New"), 
+          plot.title = element_text(size = 30),
+          plot.subtitle = element_text(size = 20)) 
+
+PabstDataGold <- top3medals %>% 
+  filter(brewery == "Pabst Brewing Co." & medal == "Gold") %>% 
+  select(year) %>% 
+  group_by(year) %>% 
+  count() %>% 
+  mutate(y = 3.2)
+
+PabstDataSilver <- top3medals %>% 
+  filter(brewery == "Pabst Brewing Co." & medal == "Silver") %>% 
+  select(year) %>% 
+  group_by(year) %>% 
+  count() %>% 
+  mutate(y = 3.0)
+ 
+PabstDataBronze <- top3medals %>% 
+  filter(brewery == "Pabst Brewing Co." & medal == "Bronze") %>% 
+  select(year) %>% 
+  group_by(year) %>% 
+  count() %>% 
+  mutate(y = 2.8)
+
+
+MillerDataGold <- top3medals %>% 
+  filter(brewery == "Miller Brewing Co."& medal == "Gold") %>% 
+  select(year) %>% 
+  group_by(year) %>% 
+  count() %>% 
+  mutate(y = 2.2)
+
+MillerDataSilver <- top3medals %>% 
+  filter(brewery == "Miller Brewing Co." & medal == "Silver") %>% 
+  select(year) %>% 
+  group_by(year) %>% 
+  count() %>% 
+  mutate(y = 2.0)
+ 
+MillerDataBronze <- top3medals %>% 
+  filter(brewery == "Miller Brewing Co." & medal == "Bronze") %>% 
+  select(year) %>% 
+  group_by(year) %>% 
+  count() %>% 
+  mutate(y = 1.8)
+
+
+
+AnheuserDataGold <- top3medals %>% 
+  filter(brewery == "Anheuser-Busch, Inc" & medal == "Gold") %>% 
+  select(year) %>% 
+  group_by(year) %>% 
+  count() %>% 
+  mutate(y = 1.2)
+
+AnheuserDataSilver <- top3medals %>% 
+  filter(brewery == "Anheuser-Busch, Inc" & medal == "Silver") %>% 
+  select(year) %>% 
+  group_by(year) %>% 
+  count() %>% 
+  mutate(y = 1.0)
+ 
+AnheuserDataBronze <- top3medals %>% 
+  filter(brewery == "Anheuser-Busch, Inc" & medal == "Bronze") %>% 
+  select(year) %>% 
+  group_by(year) %>% 
+  count() %>% 
+  mutate(y = 0.8)
+
+
+p1 + annotate(geom = "text", 
+              x = 1988 , 
+              y = 3.4 , 
+              label = "Pabst Brewing", 
+              family="Courier New", 
+              size = 10, 
+              hjust = 0) +
+      annotate(geom="text", 
+               x = 1988, 
+               y= 2.4, 
+               label = "Miller Brewing", 
+               family = "Courier New", 
+               size = 10, 
+               hjust = 0) +
+      annotate(geom="text", 
+               x=1988, 
+               y=1.4, 
+               label = "Anheuser-Busch", 
+               family = "Courier New", 
+               size = 10, 
+               hjust = 0) + 
+      annotate(geom = "text", 
+               x=PabstDataGold$year, 
+               y=PabstDataGold$y, 
+               label = PabstDataGold$n, 
+               color = "white", 
+               face = "bold", 
+               size = 7) + 
+      annotate(geom ="text", 
+               x = PabstDataSilver$year, 
+               y = PabstDataSilver$y, 
+               label = PabstDataSilver$n,
+               color = "white", 
+               face = "bold", 
+               size = 7) +
+      annotate(geom = "text", 
+               x = PabstDataBronze$year, 
+               y = PabstDataBronze$y, 
+               label = PabstDataBronze$n,
+               color = "white", 
+               face = "bold", 
+               size = 7) +
+      annotate(geom = "text", 
+               x = MillerDataGold$year, 
+               y = MillerDataGold$y, 
+               label = MillerDataGold$n,
+               color = "white", 
+               face = "bold", 
+               size = 7) + 
+      annotate(geom ="text", 
+               x = MillerDataSilver$year, 
+               y = MillerDataSilver$y, 
+               label = MillerDataSilver$n,
+               color = "white", 
+               face = "bold", 
+               size = 7) +
+      annotate(geom = "text", 
+               x = MillerDataBronze$year, 
+               y = MillerDataBronze$y, 
+               label = MillerDataBronze$n,
+               color = "white", 
+               face = "bold", 
+               size = 7) +
+      annotate(geom = "text", 
+               x = AnheuserDataGold$year, 
+               y = AnheuserDataGold$y, 
+               label = AnheuserDataGold$n,
+               color = "white", 
+               face = "bold", 
+               size = 7)+ 
+      annotate(geom ="text", 
+               x = AnheuserDataSilver$year, 
+               y = AnheuserDataSilver$y, 
+               label = AnheuserDataSilver$n,
+               color = "white", 
+               face = "bold", 
+               size = 7) + 
+      annotate(geom = "text", 
+               x = AnheuserDataBronze$year, 
+               y = AnheuserDataBronze$y, 
+               label = AnheuserDataBronze$n,
+               color = "white", 
+               face = "bold", 
+               size = 7)  
+
+
+ggsave("TTw43plot.png", width = 17, height = 9)
+```
